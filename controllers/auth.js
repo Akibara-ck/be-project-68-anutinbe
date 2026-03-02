@@ -8,9 +8,9 @@ const sendEmail = require('../utils/sendEmail');
 exports.register = async (req, res, next) => {
     let user; // ประกาศไว้นอก try เพื่อใช้ใน catch ได้
     try {
-        const { name, email, tel, password } = req.body;
+        const { name, email, tel, password,role } = req.body;
         console.log('1. req.body =', req.body); // เช็คว่า body มาถึงไหม
-        user = await User.create({ name, email, tel, password });
+        user = await User.create({ name, email, tel, password,role });
 
         const verificationToken = user.getEmailVerificationToken();
         await user.save({ validateBeforeSave: false });
