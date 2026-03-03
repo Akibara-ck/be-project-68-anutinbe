@@ -39,7 +39,6 @@ const UserSchema = new mongoose.Schema({
     default: false
   },
   emailVerificationToken: String,
-  emailVerificationExpire: Date,
   // ---------------------------------
 
   resetPasswordToken: String,
@@ -78,9 +77,6 @@ UserSchema.methods.getEmailVerificationToken = function () {
     .createHash('sha256')
     .update(verificationToken)
     .digest('hex');
-
-  // Expire in 24 hours
-  this.emailVerificationExpire = Date.now() + 24 * 60 * 60 * 1000;
 
   return verificationToken; // return raw token to send via email
 };

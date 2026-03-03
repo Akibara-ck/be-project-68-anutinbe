@@ -20,6 +20,5 @@ router.put('/changePassword', protect, changePassword);
 
 // Email verification routes
 router.get('/verifyemail/:token', verifyEmail);
-router.post('/resendverification', resendVerification);
 
 module.exports = router;

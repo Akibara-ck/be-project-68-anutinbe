@@ -16,7 +16,7 @@ exports.register = async (req, res, next) => {
         await user.save({ validateBeforeSave: false });
 
         const verifyUrl = `${process.env.CLIENT_URL}/api/v1/auth/verifyemail/${verificationToken}`;
-
+        
         await sendEmail({
             email: user.email,
             subject: 'Email Verification - Job Fair',
@@ -31,7 +31,8 @@ exports.register = async (req, res, next) => {
                 <p>This link will expire in <strong>24 hours</strong>.</p>
                 <p>If you did not register, please ignore this email.</p>
             `
-        });
+        })
+
 
         res.status(200).json({
             success: true,
@@ -41,8 +42,6 @@ exports.register = async (req, res, next) => {
     } catch (err) {
         console.log(err.stack);
         console.log('ERROR =', err.message); // ดูว่า error คืออะไร
-
-        // ลบ user ออกถ้าสร้างไปแล้วแต่ส่ง email ไม่ได้
         if (user) {
             await User.findByIdAndDelete(user._id);
         }
@@ -67,7 +66,6 @@ exports.verifyEmail = async (req, res, next) => {
 
         const user = await User.findOne({
             emailVerificationToken: hashedToken,
-            emailVerificationExpire: { $gt: Date.now() } // not expired
         });
 
         if (!user) {
@@ -80,7 +78,6 @@ exports.verifyEmail = async (req, res, next) => {
         // Mark as verified and clear token fields
         user.isEmailVerified = true;
         user.emailVerificationToken = undefined;
-        user.emailVerificationExpire = undefined;
         await user.save({ validateBeforeSave: false });
 
         sendTokenResponse(user, 200, res);
@@ -88,77 +85,6 @@ exports.verifyEmail = async (req, res, next) => {
     } catch (err) {
         console.log(err.stack);
         res.status(500).json({ success: false, message: 'Email verification failed' });
-    }
-};
-
-// @desc    Resend verification email
-// @route   POST /api/v1/auth/resendverification
-// @access  Public
-exports.resendVerification = async (req, res, next) => {
-    try {
-        const { email } = req.body;
-
-        if (!email) {
-            return res.status(400).json({ success: false, message: 'Please provide email' });
-        }
-
-        const user = await User.findOne({ email });
-
-        if (!user) {
-            // Respond generically to prevent email enumeration attack
-            return res.status(200).json({
-                success: true,
-                message: 'If that email exists, a verification link has been sent.'
-            });
-        }
-
-        if (user.isEmailVerified) {
-            return res.status(400).json({
-                success: false,
-                message: 'This email is already verified'
-            });
-        }
-
-        // Rate limit: block resend if previous token still fresh (< 1 min ago)
-        const oneMinuteAgo = Date.now() - 60 * 1000;
-        if (
-            user.emailVerificationExpire &&
-            user.emailVerificationExpire > oneMinuteAgo + 23 * 60 * 60 * 1000
-        ) {
-            return res.status(429).json({
-                success: false,
-                message: 'Please wait 1 minute before requesting a new verification email'
-            });
-        }
-
-        const verificationToken = user.getEmailVerificationToken();
-        await user.save({ validateBeforeSave: false });
-
-        const verifyUrl = `${process.env.CLIENT_URL}/api/v1/auth/verifyemail/${verificationToken}`;
-
-        await sendEmail({
-            email: user.email,
-            subject: 'Resend: Email Verification - Job Fair',
-            html: `
-                <h2>Email Verification</h2>
-                <p>Click the button below to verify your email:</p>
-                <a href="${verifyUrl}"
-                   style="background:#4F46E5;color:white;padding:12px 24px;
-                          text-decoration:none;border-radius:6px;display:inline-block;">
-                   Verify Email
-                </a>
-                <p>This link will expire in <strong>24 hours</strong>.</p>
-            `
-        });
-
-        res.status(200).json({
-            success: true,
-            message: 'If that email exists, a verification link has been sent.'
-        });
-
-    } catch (err) {
-        console.log(err.stack);
-        res.status(500).json({ success: false, message: 'Could not resend verification email' });
     }
 };
 
