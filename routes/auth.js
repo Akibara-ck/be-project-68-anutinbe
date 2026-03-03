@@ -6,7 +6,7 @@ const {
     logout,
     changePassword,
     verifyEmail,
-    resendVerification
+    
 } = require('../controllers/auth');
 const { protect } = require('../middleware/auth');
 
