@@ -27,7 +27,18 @@ const CompanySchema = new mongoose.Schema({//fixed name
     telephone:{
         type:String,
         required: [true,'Please add a telephone number']
-    }
+    },
+    tags:{
+        type:[String]
+    },
+    picture:{
+        type:String,
+        required: [true,'Please add a URL picture']
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now,
+    },
 },{
     toJSON: {virtuals:true},
     toObject: {virtuals:true}
