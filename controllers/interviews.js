@@ -7,18 +7,18 @@ exports.getInterviews = async (req, res, next) => {
     if (req.user.role !== 'admin') {
         query = Interview.find({ user: req.user.id }).populate({
             path: 'company',
-            select: 'name province tel'
+            select: 'name description telephone'
         });
     } else {
         if (req.params.companyId) {
             query = Interview.find({ company: req.params.companyId }).populate({
                 path: 'company',
-                select: 'name addr tel'
+                select: 'name description telephone'
             });
         } else {
             query = Interview.find().populate({
                 path: 'company',
-                select: 'name addr tel'
+                select: 'name description telephone'
             });
         }
     }
@@ -43,7 +43,7 @@ exports.getInterview = async (req, res, next) => {
     try {
         const interview = await Interview.findById(req.params.id).populate({
             path: 'company',
-            select: 'name description tel'
+            select: 'name description telephone'
         });
 
         if (!interview) {
