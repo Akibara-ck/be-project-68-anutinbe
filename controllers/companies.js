@@ -5,13 +5,12 @@ const Interview = require('../models/Interview');
 
 exports.getCompanies = async (req, res, next) => {
     let query;
-    
 
     //copy req query
     const reqQuery = {...req.query};
 
     //exclude field
-    const removeFields = ['select', 'sort','page','limit'];
+    const removeFields = ['select', 'sort', 'page', 'limit', 'tags'];
 
     //loop over remove field and del them from req query
     removeFields.forEach(params=>delete reqQuery[params] );
@@ -37,14 +36,25 @@ exports.getCompanies = async (req, res, next) => {
         query=query.sort('-createdAt');
     }
 
+    //tags
+    if(req.query.tags){
+        let comp;
+        let tagsJson = JSON.stringify(req.query.tags);
+        tagsJson = tagsJson.replace(/\b(all|in)\b/g,match=>{return comp = `$${match}`;});
+        let queryTags = JSON.parse(tagsJson);
+        queryTags[comp] = queryTags[comp].split(',');
+        query=query.find({tags:queryTags});
+    }
+
     //Pagination
     const page = parseInt(req.query.page,10)||1;
     const limit = parseInt(req.query.limit,10)||25;
     const startIndex=(page-1)*limit;
     const endIndex=page*limit;
-    const total=await Company.countDocuments () ;
+    const total = await query.clone().countDocuments();
+    const totalPages = Math.ceil(total/limit);
 
-    query=query.skip (startIndex).limit(limit);
+    query=query.skip(startIndex).limit(limit);
 
     try{
         const companies = await query;
@@ -64,7 +74,12 @@ exports.getCompanies = async (req, res, next) => {
             }
         }
 
-        res.status(200).json({success:true, count:companies.length,pagination, data:companies});
+        res.status(200).json({
+            success:true,
+            count:companies.length,
+            totalPages,
+            pagination,
+            data:companies});
     }catch(err){
         res.status(400).json({success:false});
     }
@@ -91,7 +106,7 @@ exports.getCompany = async (req, res, next) => {
 // @route     POST /api/v1/companies
 
 exports.createCompany = async (req, res, next) => {
-    //console.log(req.body);
+    console.log(req.body);
     const company = await Company.create(req.body);
     res.status(201).json({
         success:true,

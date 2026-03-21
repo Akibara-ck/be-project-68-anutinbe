@@ -27,13 +27,6 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(helmet());
 // app.use(mongoSanitize());
-// const sanitize = mongoSanitize()
-// app.use((req, res, next) => {
-//   if (req.body.website 
-//         || req.body.picture
-//   ) return next(); // skip
-//   sanitize(req, res, next);
-// });
 app.use(xss());
 app.use(limiter);
 app.use(hpp());
