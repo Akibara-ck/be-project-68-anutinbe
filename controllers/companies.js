@@ -38,12 +38,13 @@ exports.getCompanies = async (req, res, next) => {
 
     //tags
     if(req.query.tags){
-        let comp;
-        let tagsJson = JSON.stringify(req.query.tags);
-        tagsJson = tagsJson.replace(/\b(all|in)\b/g,match=>{return comp = `$${match}`;});
-        let queryTags = JSON.parse(tagsJson);
-        queryTags[comp] = queryTags[comp].split(',');
-        query=query.find({tags:queryTags});
+        const tags = Object.entries(req.query.tags)
+            .map(([key, values]) => {return {[`$${key}`]: values.split(',')}})[0]
+        query=query.find({tags:tags});
+    }
+
+    if(req.query.search){
+        query=query.find({name:{$regex:req.query.search, $options:'i'}});
     }
 
     //Pagination
