@@ -9,7 +9,7 @@ exports.register = async (req, res, next) => {
     let user; // ประกาศไว้นอก try เพื่อใช้ใน catch ได้
     try {
         const { name, email, tel, password,role } = req.body;
-        console.log('1. req.body =', req.body); // เช็คว่า body มาถึงไหม
+        // console.log('1. req.body =', req.body); // เช็คว่า body มาถึงไหม
         user = await User.create({ name, email, tel, password,role });
 
         const verificationToken = user.getEmailVerificationToken();
@@ -32,6 +32,7 @@ exports.register = async (req, res, next) => {
                 <p>If you did not register, please ignore this email.</p>
             `
         })
+        console.log('verification email sended');
 
 
         res.status(200).json({

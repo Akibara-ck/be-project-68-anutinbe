@@ -1,3 +1,4 @@
+const { set } = require('mongoose');
 const nodemailer = require('nodemailer');
 
 // Create transporter once and reuse it
@@ -9,12 +10,13 @@ const transporter = nodemailer.createTransport({
         user: process.env.SMTP_EMAIL,
         pass: process.env.SMTP_PASSWORD
     },
-    pool: {
-        maxConnections: 5,
-        maxMessages: 100,
-        rateDelta: 4000,
-        rateLimit: 14
-    }
+    pool: true,
+    maxConnections: 5,
+    maxMessages: 100,
+    rateDelta: 4000,
+    rateLimit: 14,
+    connectionTimeout: 10000,
+    greetingTimeout: 5000,
 });
 
 const sendEmail = async (options) => {
@@ -25,7 +27,13 @@ const sendEmail = async (options) => {
         html: options.html
     };
 
-    await transporter.sendMail(message);
+    try {
+        const info = await transporter.sendMail(message);
+        console.log('Email sent:', info.messageId);
+    } catch (err) {
+        console.error('Email error:', err);
+        throw err;
+    }
 };
 
 module.exports = sendEmail;
