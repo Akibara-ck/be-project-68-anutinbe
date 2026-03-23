@@ -10,11 +10,10 @@ exports.getCompanies = async (req, res, next) => {
     const reqQuery = {...req.query};
 
     //exclude field
-    const removeFields = ['select', 'sort', 'page', 'limit', 'tags'];
+    const removeFields = ['select', 'sort', 'page', 'limit', 'tags', 'search'];
 
     //loop over remove field and del them from req query
     removeFields.forEach(params=>delete reqQuery[params] );
-    console.log(reqQuery);
 
 
     //create query string
@@ -48,12 +47,12 @@ exports.getCompanies = async (req, res, next) => {
     }
 
     //Pagination
-    const page = parseInt(req.query.page,10)||1;
     const limit = parseInt(req.query.limit,10)||25;
+    const total = await query.clone().countDocuments();
+    const totalPages = Math.ceil(total/limit) || 1;
+    const page = (parseInt(req.query.page,10)>totalPages)?totalPages:parseInt(req.query.page,10)||1;
     const startIndex=(page-1)*limit;
     const endIndex=page*limit;
-    const total = await query.clone().countDocuments();
-    const totalPages = Math.ceil(total/limit);
 
     query=query.skip(startIndex).limit(limit);
 
@@ -79,6 +78,7 @@ exports.getCompanies = async (req, res, next) => {
             success:true,
             count:companies.length,
             totalPages,
+            totalCount:total,
             pagination,
             data:companies});
     }catch(err){
