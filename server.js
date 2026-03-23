@@ -19,7 +19,7 @@ connectDB();
 
 const app = express();
 const limiter = rateLimit({
-    windowMs:10*60*100,
+    windowMs:5*60*1000,
     max:100
 })
 app.set('query parser','extended');
