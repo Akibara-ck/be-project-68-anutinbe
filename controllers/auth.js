@@ -205,3 +205,60 @@ exports.changePassword = async (req, res, next) => {
         return res.status(500).json({ success: false, message: 'Cannot change password' });
     }
 };
+
+// @desc    Resend email verification
+// @route   Post /api/v1/auth/resendVerification
+// @access  Public
+exports.resendVerification = async (req, res, next) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ success: false, message: 'Please provide email' });
+        }
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            // Respond generically to prevent email enumeration attack
+            return res.status(200).json({
+                success: true,
+                message: 'If that email exists, a verification link has been sent.'
+            });
+        }
+
+        if (user.isEmailVerified) {
+            return res.status(400).json({
+                success: false,
+                message: 'This email is already verified'
+            });
+        }
+
+        const verificationToken = user.getEmailVerificationToken();
+        await user.save({ validateBeforeSave: false });
+
+        const verifyUrl = `${process.env.CLIENT_URL}/api/v1/auth/verifyemail/${verificationToken}`;
+
+        await sendEmail({
+            email: user.email,
+            subject: 'Resend: Email Verification - Job Fair',
+            html: `
+                <h2>Email Verification</h2>
+                <p>Click the button below to verify your email:</p>
+                <a href="${verifyUrl}"
+                   style="background:#4F46E5;color:white;padding:12px 24px;
+                          text-decoration:none;border-radius:6px;display:inline-block;">
+                   Verify Email
+                </a>
+                <p>This link will expire in <strong>24 hours</strong>.</p>
+            `
+        });
+
+        res.status(200).json({
+            success: true,
+            message: 'If that email exists, a verification link has been sent.'
+        });
+
+    } catch (err) {
+        console.log(err.stack);
+        res.status(500).json({ success: false, message: 'Could not resend verification email' });
+    }
+};
